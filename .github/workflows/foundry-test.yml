@@ -3,29 +3,36 @@ name: Foundry Test
 on: 
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: 
+      - main
   pull_request:
+    branches: 
+      - main
 
 env:
   FOUNDRY_PROFILE: ci
 
 jobs:
   check:
+    name: Foundry project
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: true
 
-    name: Foundry project
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Checkout the repository with recursive submodules
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      # Install the Foundry toolchain using a specific nightly version
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
 
+      # Run Forge build and check contract sizes
       - name: Run Forge build
         run: |
           cd contracts
@@ -33,8 +40,16 @@ jobs:
           forge build --sizes
         id: build
 
+      # Run tests using Forge with verbose output
       - name: Run Forge tests
         run: |
           cd contracts
           forge test -vvv
         id: test
+
+    # Optionally add a step to upload build artifacts or test results
+    # - name: Upload test results
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: forge-test-results
+    #     path: ./test-results/*
